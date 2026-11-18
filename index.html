@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2712%27 fill=%27%230e6e8c%27/%3E%3C/svg%3E">
+<title>Gene–Disease Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+:root{
+  --bg:#f5f7f9; --card:#ffffff; --ink:#1c2a39; --muted:#5d6b7a; --line:#dde3ea;
+  --accent:#0e6e8c; --accent-ink:#ffffff; --gene:#2f6fdb; --disease:#d9534f;
+  --chip:#eaf1f8;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0f1720; --card:#17222e; --ink:#e7edf3; --muted:#95a3b2; --line:#2a3947; --accent:#4fb3d1; --accent-ink:#06222b; --gene:#6ea0f5; --disease:#f08481; --chip:#1f3042;}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"IBM Plex Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{padding:32px 20px 8px;max-width:1100px;margin:0 auto}
+h1{margin:0;font-size:1.7rem;font-weight:600}
+header p{margin:4px 0 0;color:var(--muted)}
+main{max-width:1100px;margin:0 auto;padding:16px 20px 60px;display:grid;gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.stats{display:flex;flex-wrap:wrap;gap:12px}
+.stat{flex:1 1 150px;padding:12px 14px;border:1px solid var(--line);border-radius:8px}
+.stat b{display:block;font-size:1.4rem;font-weight:600}
+.stat span{color:var(--muted);font-size:.9rem}
+.searchbar{display:flex;gap:8px;flex-wrap:wrap}
+input[type=search]{flex:1 1 260px;font:inherit;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+button{font:inherit;font-weight:500;padding:11px 18px;border:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hint{color:var(--muted);font-size:.9rem;margin-top:8px}
+.tabs{display:flex;gap:6px;margin:16px 0 12px;border-bottom:1px solid var(--line)}
+.tab{background:none;color:var(--muted);border-radius:0;padding:8px 14px;border-bottom:3px solid transparent}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pill{background:var(--chip);padding:4px 12px;border-radius:99px;font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.item{border:1px solid var(--line);border-radius:8px;padding:14px;border-left:5px solid var(--gene)}
+.item.dis{border-left-color:var(--disease)}
+.item h3{margin:0 0 2px;font-size:1.05rem}
+.meta{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--muted);word-break:break-all}
+.item p{margin:8px 0 0;font-size:.92rem}
+.tag{display:inline-block;background:var(--chip);padding:2px 9px;border-radius:99px;font-size:.8rem;margin:6px 6px 0 0}
+.link{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:.88rem;color:var(--muted)}
+.link b{color:var(--ink);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+.tablewrap{overflow-x:auto}
+#network{height:560px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.legend{display:flex;gap:16px;margin:0 0 10px;font-size:.9rem;color:var(--muted)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px}
+.msg{padding:14px;border-radius:8px;background:var(--chip)}
+.msg.err{background:color-mix(in srgb,var(--disease) 15%,transparent)}
+details{margin-top:14px}
+pre{overflow:auto;max-height:320px;background:var(--bg);padding:12px;border-radius:8px;font-size:.8rem}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Gene–Disease Explorer</h1>
+  <p>Search a gene (e.g. FTO) or a disease (e.g. presbyopia) to see how they are linked.</p>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="st">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2 id="st" style="margin:0;font-size:1.1rem">Database at a glance</h2>
+      <button class="ghost" id="refresh">Refresh</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:12px"><span class="hint">Loading…</span></div>
+  </section>
+
+  <section class="card">
+    <form class="searchbar" id="form" role="search">
+      <input type="search" id="q" placeholder="Gene or disease name" aria-label="Search genes or diseases" value="FTO" autocomplete="off">
+      <button type="submit" id="go">Search</button>
+    </form>
+    <div class="hint" id="status">Try: FTO, BRCA1, diabetes, presbyopia</div>
+
+    <div id="results" class="hidden">
+      <div class="summary" id="summary"></div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="cards" aria-selected="true">Cards</button>
+        <button class="tab" role="tab" data-tab="table" aria-selected="false">Table</button>
+        <button class="tab" role="tab" data-tab="graph" aria-selected="false">Network</button>
+      </div>
+      <div id="pane-cards"><div class="grid" id="cards"></div></div>
+      <div id="pane-table" class="hidden"><div class="tablewrap"><table id="table"></table></div></div>
+      <div id="pane-graph" class="hidden">
+        <div class="legend"><span><i class="dot" style="background:var(--gene)"></i>Gene</span><span><i class="dot" style="background:var(--disease)"></i>Disease</span></div>
+        <div id="network"></div>
+      </div>
+      <details><summary>Show raw response</summary><pre id="raw"></pre></details>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---- API routes (match your FastAPI app) ---- */
+const API = {
+  stats:  () => '/api/stats',
+  search: q => '/api/search?q=' + encodeURIComponent(q)
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Number(n).toLocaleString();
+let current = [];   // normalized associations
+let network = null;
+
+async function getJSON(url){
+  const r = await fetch(url);
+  const text = await r.text();
+  if(!r.ok) throw new Error(`Server returned ${r.status} for ${url}. ${text.slice(0,120)}`);
+  try { return JSON.parse(text); } catch { throw new Error('Server did not return JSON for ' + url); }
+}
+
+/* ---------- Stats ---------- */
+async function loadStats(){
+  try{
+    const d = await getJSON(API.stats());
+    const nodes = d.nodes || [];
+    const find = l => (nodes.find(n => n.label === l) || {}).total;
+    const cells = [
+      ['Genes', find('Gene')], ['Diseases', find('Disease')],
+      ['Associations', d.total_relationships], ['Total nodes', d.total_nodes]
+    ].filter(c => c[1] != null);
+    $('stats').innerHTML = cells.map(([k,v]) => `<div class="stat"><b>${fmt(v)}</b><span>${k}</span></div>`).join('');
+  }catch(e){
+    $('stats').innerHTML = `<div class="msg err">Couldn’t load statistics. ${esc(e.message)}</div>`;
+  }
+}
+
+/* ---------- Normalize whatever the API returns into gene/disease pairs ---------- */
+function normalize(data){
+  const out = [], seen = new Set();
+  const push = (gene, disease, rel) => {
+    if(!gene || !disease) return;
+    const key = (gene.gene_id||gene.name) + '|' + (disease.disease_id||disease.name);
+    if(seen.has(key)) return;
+    seen.add(key); out.push({gene, disease, rel: rel || 'ASSOCIATED_WITH'});
+  };
+  const lists = [data.genes, data.diseases, data.associations].filter(Array.isArray);
+  for(const list of lists){
+    for(const it of list){
+      push(it.gene, it.disease, it.relationship);
+    }
+  }
+  return out;
+}
+
+/* ---------- Search ---------- */
+async function doSearch(q){
+  $('go').disabled = true;
+  $('status').textContent = 'Searching…';
+  try{
+    const data = await getJSON(API.search(q));
+    current = normalize(data);
+    $('raw').textContent = JSON.stringify(data, null, 2);
+    render(q, data);
+    $('status').textContent = current.length ? '' : `No results for “${q}”. Check the spelling or try a gene symbol or full disease name.`;
+  }catch(e){
+    $('results').classList.add('hidden');
+    $('status').innerHTML = `<span class="msg err" style="display:block">${esc(e.message)}</span>`;
+  }finally{ $('go').disabled = false; }
+}
+
+function render(q, data){
+  const genes = new Map(), diseases = new Map();
+  current.forEach(a => { genes.set(a.gene.gene_id||a.gene.name, a.gene); diseases.set(a.disease.disease_id||a.disease.name, a.disease); });
+  $('results').classList.toggle('hidden', !current.length);
+  $('summary').innerHTML =
+    `<span class="pill">${genes.size} gene${genes.size!==1?'s':''}</span>
+     <span class="pill">${diseases.size} disease${diseases.size!==1?'s':''}</span>
+     <span class="pill">${current.length} association${current.length!==1?'s':''}</span>`;
+
+  /* Cards: one per gene, listing its diseases */
+  const byGene = new Map();
+  current.forEach(a => {
+    const k = a.gene.gene_id||a.gene.name;
+    if(!byGene.has(k)) byGene.set(k, {gene:a.gene, diseases:[]});
+    byGene.get(k).diseases.push(a.disease);
+  });
+  $('cards').innerHTML = [...byGene.values()].map(({gene,diseases}) => {
+    const loc = gene.chromosome ? `Chr ${esc(gene.chromosome)}` : '';
+    const span = (gene.start && gene.end) ? `${fmt(gene.start)}–${fmt(gene.end)}` : '';
+    const strand = gene.strand === 1 ? '+ strand' : gene.strand === -1 ? '− strand' : '';
+    return `<article class="item">
+      <h3>${esc(gene.name)}</h3>
+      <div class="meta">${esc(gene.gene_id)}</div>
+      ${[loc,span,strand].filter(Boolean).map(t=>`<span class="tag">${t}</span>`).join('')}
+      <div class="link"><b>Linked to ${diseases.length} disease${diseases.length!==1?'s':''}</b><br>
+        ${diseases.slice(0,6).map(d=>`<span class="tag" title="${esc(d.description||'')}">${esc(d.name)}</span>`).join('')}
+        ${diseases.length>6?`<span class="tag">+${diseases.length-6} more</span>`:''}
+      </div></article>`;
+  }).join('');
+
+  /* Table */
+  $('table').innerHTML = `<thead><tr><th>Gene</th><th>Location</th><th>Disease</th><th>Area</th><th>Description</th></tr></thead><tbody>` +
+    current.map(a => `<tr>
+      <td><b>${esc(a.gene.name)}</b><div class="meta">${esc(a.gene.gene_id)}</div></td>
+      <td>${a.gene.chromosome?'Chr '+esc(a.gene.chromosome):''}</td>
+      <td>${esc(a.disease.name)}<div class="meta">${esc(a.disease.disease_id)}</div></td>
+      <td>${esc(a.disease.therapeutic_areas||'')}</td>
+      <td>${esc(a.disease.description||'')}</td></tr>`).join('') + '</tbody>';
+
+  if(!$('pane-graph').classList.contains('hidden')) drawGraph();
+}
+
+/* ---------- Network (built from the search results, no extra API call) ---------- */
+function drawGraph(){
+  const nodes = new Map(), edges = [];
+  const style = (c) => ({color:{background:c, border:c}, font:{color:getComputedStyle(document.body).color}});
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  current.slice(0, 150).forEach(a => {
+    const g = 'g:' + (a.gene.gene_id||a.gene.name), d = 'd:' + (a.disease.disease_id||a.disease.name);
+    if(!nodes.has(g)) nodes.set(g, {id:g, label:a.gene.name, shape:'dot', size:18, title:a.gene.gene_id, ...style(css('--gene'))});
+    if(!nodes.has(d)) nodes.set(d, {id:d, label:a.disease.name, shape:'box', title:a.disease.description||a.disease.name, ...style(css('--disease')), font:{color:'#fff',size:12}});
+    edges.push({from:g, to:d, color:{color:css('--line'), highlight:css('--accent')}});
+  });
+  if(network) network.destroy();
+  network = new vis.Network($('network'), {nodes:[...nodes.values()], edges}, {
+    physics:{stabilization:{iterations:150}, barnesHut:{springLength:140}},
+    interaction:{hover:true, tooltipDelay:100}
+  });
+}
+
+/* ---------- Wiring ---------- */
+$('form').addEventListener('submit', e => { e.preventDefault(); const q = $('q').value.trim(); if(q) doSearch(q); });
+$('refresh').addEventListener('click', loadStats);
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  ['cards','table','graph'].forEach(k => $('pane-'+k).classList.toggle('hidden', k !== t.dataset.tab));
+  if(t.dataset.tab === 'graph') drawGraph();
+}));
+loadStats();
+</script>
+</body>
+</html>
