@@ -1,0 +1,111 @@
+{
+  "targets": {
+    "rows_in": 78733,
+    "rows_out": 78733,
+    "dropped": 0
+  },
+  "disease_prefixes_in_source": {
+    "OBA": 17727,
+    "MONDO": 15551,
+    "EFO": 9257,
+    "HP": 2183,
+    "Orphanet": 571,
+    "GO": 470,
+    "GSSO": 16,
+    "OTAR": 9,
+    "OBI": 5,
+    "MP": 2,
+    "PATO": 2,
+    "OGMS": 1,
+    "UBERON": 1
+  },
+  "excluded_non_disease_terms": {
+    "by_prefix": 20407,
+    "no_real_therapeutic_area": 7841,
+    "umbrella_term": 97,
+    "veto_area": 7
+  },
+  "disease_filter_examples": {
+    "no_real_therapeutic_area": [
+      "measurement",
+      "protein measurement",
+      "phenotype",
+      "metabolite measurement",
+      "lipid or lipoprotein measurement",
+      "lipid measurement",
+      "phosphate measurement",
+      "cardiovascular measurement",
+      "cardiovascular disease biomarker measurement",
+      "seropositivity measurement",
+      "hematological measurement",
+      "temporal measurement",
+      "mental or behavioural disorder biomarker",
+      "lipoprotein measurement",
+      "triglyceride measurement"
+    ],
+    "umbrella_term": [
+      "genetic, familial or congenital disease",
+      "hereditary disease",
+      "nervous system disorder",
+      "cancer or benign tumor",
+      "neoplastic disease or syndrome",
+      "neoplasm",
+      "musculoskeletal or connective tissue disease",
+      "musculoskeletal system disorder",
+      "hereditary neurological disease",
+      "central nervous system disorder",
+      "nutritional or metabolic disease",
+      "metabolic disease",
+      "skeletal system disorder",
+      "inborn errors of metabolism",
+      "cancer"
+    ],
+    "veto_area": [
+      "multiple sclerosis symptom measurement",
+      "chronic progressive multiple sclerosis",
+      "secondary progressive multiple sclerosis",
+      "primary progressive multiple sclerosis",
+      "relapsing-remitting multiple sclerosis",
+      "response to platinum-based neoadjuvant chemotherapy",
+      "sugar consumption measurement"
+    ]
+  },
+  "diseases": {
+    "rows_in": 45896,
+    "rows_out": 17443,
+    "dropped": 28453
+  },
+  "ot_associations": {
+    "rows_in": 7225847,
+    "rows_out": 5938054,
+    "dropped": 1287793
+  },
+  "gwas_lines_not_parsed": 0,
+  "gwas_p_threshold": 5e-08,
+  "gwas_significant": {
+    "rows_in": 1203840,
+    "rows_out": 1026666,
+    "dropped": 177174
+  },
+  "gwas_valid_gene_and_disease": {
+    "rows_in": 1026666,
+    "rows_out": 79052,
+    "dropped": 947614
+  },
+  "gwas_gene_disease_edges": 44711,
+  "merged_edges": {
+    "total": 5953115,
+    "in_both": 29650
+  },
+  "datatype_rows_by_type": {
+    "animal_model": 3484695,
+    "literature": 2083256,
+    "genetic_association": 248659,
+    "rna_expression": 161027,
+    "somatic_mutation": 94288,
+    "known_drug": 90600,
+    "genetic_literature": 14641,
+    "affected_pathway": 6329
+  },
+  "datatype_pairs": 5938054
+}
