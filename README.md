@@ -179,6 +179,9 @@ Potential extensions include:
 
 M.Sc. Data Science and Bio AI  
 Digital University Kerala
+**Aparna sreenivas**
+M.Sc. Data Science and Bio AI  
+Digital University Kerala
 
 - GitHub: https://github.com/Uzmahaseeb4
 - LinkedIn: https://www.linkedin.com/in/uzma-ba5195318/
