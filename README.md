@@ -176,10 +176,9 @@ Potential extensions include:
 ## 👩‍💻 Author
 
 **Uzma Haseeb**
-
 M.Sc. Data Science and Bio AI  
 Digital University Kerala
-**Aparna sreenivas**
+**Aparna Sreenivasan**
 M.Sc. Data Science and Bio AI  
 Digital University Kerala
 
